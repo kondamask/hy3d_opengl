@@ -102,7 +102,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	player.Initialize( { 0.0f, 0.0f, 5.0f }, { 0.0f, 0.0f, -1.0f }, VEC3_UP, 5.0f, 150.0f, 90.0f);
+	player.Initialize( { 0.0f, 0.0f, 5.0f }, { 0.0f, 0.0f, -1.0f }, VEC3_UP, 5.0f, 150.0f, 60.0f);
 
 	shader_info shaders[] = {
 		{ "default.vert", GL_VERTEX_SHADER },
@@ -178,23 +178,24 @@ int main()
 
 	while (!glfwWindowShouldClose(window))
 	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
 		f32 curFrame = (f32)glfwGetTime();
 		deltaTime = curFrame - lastFrame;
 		lastFrame = curFrame;
 
 		ProcessKeyboard(window);
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		f32 green = (sin(curFrame) / 2.0f) + 1.0f;
-
 		defaultShader.Use();
 
 		vec3 light[] = { 1.0f, 1.0f, 1.0f };
-		vec3 object[] = { 0.2f, 0.7f, 0.0f};
+		
+		
+		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame)};
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightPos", &player.pos);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightColor", light);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", object);
+		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "viewPos", &player.pos);
 
 		mat4 model = Translate( { 0.0f, 0.0f, 0.0f });
 
