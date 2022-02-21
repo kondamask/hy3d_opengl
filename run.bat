@@ -1,0 +1,1 @@
+start x64/Debug/hy3d_opengl_vs.exe

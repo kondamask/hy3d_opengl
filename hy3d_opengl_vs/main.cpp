@@ -5,6 +5,7 @@
 #include "shader.h"
 #include "math.h"
 #include "camera.h"
+#include "model.h"
 
 //------------------------------------------------------------------------
 
@@ -155,6 +156,10 @@ int main()
 		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
 	};
+	
+	cylinder cyl = {};
+	cyl.Make(1, 20, 2.0f, 0.5f);
+	
 	u32 vao, vbo;
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
@@ -162,15 +167,15 @@ int main()
 	glBindVertexArray(vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	
+	glBufferData(GL_ARRAY_BUFFER, cyl.BufferSize(), cyl.verts, GL_STATIC_DRAW);
+
 	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
 	glEnableVertexAttribArray(0);
 	// normal attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
-	
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
@@ -179,7 +184,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
+
 		f32 curFrame = (f32)glfwGetTime();
 		deltaTime = curFrame - lastFrame;
 		lastFrame = curFrame;
@@ -189,9 +194,9 @@ int main()
 		defaultShader.Use();
 
 		vec3 light[] = { 1.0f, 1.0f, 1.0f };
-		
-		
-		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame)};
+
+
+		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame) };
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightPos", &player.pos);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightColor", light);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", object);
@@ -205,14 +210,14 @@ int main()
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "view", &view);
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "proj", &proj);
 
-
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, cyl.nVerts);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	cyl.Delete();
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 
