@@ -144,4 +144,6 @@ static void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &par
 static void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
 static void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
 
+#define DOG_LEG_SCALE { 0.07f, 0.07f, 0.5f }
+
 #endif
