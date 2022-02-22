@@ -36,6 +36,9 @@ typedef double f64;
 
 #define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
 
+#define ArrAlloc(type, count) ((type *)malloc(count * sizeof(type)))
+#define ArrFree(ptr) free(ptr)
+
 //------------------------------------------------------------------------
 // TODO: Make this an actual assetion
 #define AssertBreak() *(int *)0 = 0

@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "math.h"
+#include "shader.h"
 
 struct vertex
 {
@@ -10,29 +11,101 @@ struct vertex
 	vec3 normal;
 	//vec2 tex;
 };
-
-struct cylinder
+struct mesh_part
 {
-	vertex *verts;
-	u32 nVerts;
-
-	//------------------------------------------------------------------------
-
-	void Make(i32 stacks, i32 slices, f32 height, f32 radius);
-
-	inline void Delete() { free(verts); }
-
-	inline u32 BufferSize() { return (nVerts * sizeof(vertex)); }
-
+	mat4 model;
+	u32 firstVert;
+	u32 firstIndex;
+	u32 nVertices;
+	u32 nIndices;
+	mesh_part *sibling;
+	mesh_part *child;
+	void (*Draw)(ShaderProgram &shader, mesh_part &part);
 };
 
-struct model_part
-{
-	f32 modelView[16];
-	model_part *sibling;
-	model_part *child;
-	void (*Draw)();
+class mesh
+{	
+public:
+	void Draw(ShaderProgram &shader);
+
+	bool MakeCylinder(u32 stacks = 1, u32 slices = 20, f32 height = 1.0f, f32 radius = 1.0f);
+
+	bool MakeSphere(u32 stacks = 25, u32 slices = 25, f32 radius = 1.0f);
+
+	bool MakeDog();
+
+	void Delete();
+	
+	inline u32 GetVertexBufferSize() { return (nVertices * sizeof(vertex)); }
+
+	inline u32 GetIndexBufferSize() { return (nIndices * sizeof(u32)); }
+
+private:
+	mesh_part *parts = 0;
+	vertex *vertices = 0;
+	u32 *indices = 0;
+	u32 nVertices = 0;
+	u32 nIndices = 0;
+	vec3 pos = {};
+	u32 VAO;
+	u32 VBO;
+	u32 EBO;
+	
+	inline void GLSetUp();
+
+	inline void Traverse(ShaderProgram &shader, mesh_part *p, mat4 &prevModel);
+
+	static_func void DivideTriangle(vec3 a, vec3 b, vec3 c, int reps);
 };
+
+/* CUBE
+	float vertices[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+	0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	};
+*/
+
+//------------------------------------------------------------------------
+// DOG STUFF
 
 enum DOG_PARTS
 {
@@ -55,49 +128,20 @@ enum DOG_PARTS
 	DOG_PARTS_COUNT
 };
 
-static void Draw_DOG_TORSO();
-static void Draw_DOG_NECK();
-static void Draw_DOG_HEAD();
-static void Draw_DOG_BACK_LEFT_UPPER_LEG();
-static void Draw_DOG_BACK_LEFT_LOWER_LEG();
-static void Draw_DOG_BACK_LEFT_FOOT();
-static void Draw_DOG_BACK_RIGHT_UPPER_LEG();
-static void Draw_DOG_BACK_RIGHT_LOWER_LEG();
-static void Draw_DOG_BACK_RIGHT_FOOT();
-static void Draw_DOG_FRONT_LEFT_UPPER_LEG();
-static void Draw_DOG_FRONT_LEFT_LOWER_LEG();
-static void Draw_DOG_FRONT_LEFT_FOOT();
-static void Draw_DOG_FRONT_RIGHT_UPPER_LEG();
-static void Draw_DOG_FRONT_RIGHT_LOWER_LEG();
-static void Draw_DOG_FRONT_RIGHT_FOOT();
-static void (*DrawDogFuncs[])() = {
-	Draw_DOG_TORSO,
-	Draw_DOG_NECK,
-	Draw_DOG_HEAD,
-	Draw_DOG_BACK_LEFT_UPPER_LEG,
-	Draw_DOG_BACK_LEFT_LOWER_LEG,
-	Draw_DOG_BACK_LEFT_FOOT,
-	Draw_DOG_BACK_RIGHT_UPPER_LEG,
-	Draw_DOG_BACK_RIGHT_LOWER_LEG,
-	Draw_DOG_BACK_RIGHT_FOOT,
-	Draw_DOG_FRONT_LEFT_UPPER_LEG,
-	Draw_DOG_FRONT_LEFT_LOWER_LEG,
-	Draw_DOG_FRONT_LEFT_FOOT,
-	Draw_DOG_FRONT_RIGHT_UPPER_LEG,
-	Draw_DOG_FRONT_RIGHT_LOWER_LEG,
-	Draw_DOG_FRONT_RIGHT_FOOT
-};
-
-struct model
-{
-	model_part *parts;
-
-	//------------------------------------------------------------------------
-	
-	void Draw();
-
-private:
-	void Traverse(model_part*);
-};
+static void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
 
 #endif

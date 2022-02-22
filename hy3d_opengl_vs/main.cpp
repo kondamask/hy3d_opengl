@@ -112,72 +112,8 @@ int main()
 	ShaderProgram defaultShader = {};
 	defaultShader.Create(shaders, ArrayCount(shaders));
 
-	// Create Vertex Buffer
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-		0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-	};
-	
-	cylinder cyl = {};
-	cyl.Make(1, 20, 2.0f, 0.5f);
-	
-	u32 vao, vbo;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
-
-	glBindVertexArray(vao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, cyl.BufferSize(), cyl.verts, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	// normal attribute
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	mesh dog = {}; 
+	dog.MakeDog();
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
@@ -194,32 +130,25 @@ int main()
 		defaultShader.Use();
 
 		vec3 light[] = { 1.0f, 1.0f, 1.0f };
-
-
+	 
 		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame) };
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightPos", &player.pos);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightColor", light);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", object);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "viewPos", &player.pos);
 
-		mat4 model = Translate( { 0.0f, 0.0f, 0.0f });
-
 		mat4 view = LookAt(player.pos, player.pos + player.dir, VEC3_UP);
 		mat4 proj = Perspective(player.fov, (f32)WINDOW_WIDTH / (f32)WINDOW_HEIGHT, 0.1f, 100.0f);
-		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "model", &model);
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "view", &view);
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "proj", &proj);
-
-		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, cyl.nVerts);
+		
+		dog.Draw(defaultShader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	cyl.Delete();
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(1, &vbo);
+	dog.Delete();
 
 	glfwTerminate();
 	return 0;
