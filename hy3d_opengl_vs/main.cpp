@@ -18,8 +18,13 @@ global_var f32 lastFrame = 0.0f;
 
 global_var camera player;
 
+global_var bool inFreeRoam = true;
 global_var vec2 mouseLastPos = { WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f };
 global_var bool firstMouse = true;
+
+global_var bool keyWasDown[GLFW_KEY_LAST] = {};
+
+global_var u32 dogCurAnim = DOG_ANIMATION_NONE;
 
 //------------------------------------------------------------------------
 
@@ -30,14 +35,17 @@ static_func void OnFramebufferSize(GLFWwindow* window, int width, int height)
 
 static_func void OnMouseInput(GLFWwindow* window, double xPos, double yPos)
 {
+	if (!inFreeRoam)
+		return;
+
 	if (firstMouse)
 	{
 		mouseLastPos = { (f32)xPos, (f32)yPos };
 		firstMouse = false;
 	}
 
-	f32 yOffset = (mouseLastPos.Y - (f32)yPos) * player.sens * deltaTime; // reversed since y-coordinates range from bottom to top
-	f32 xOffset = ((f32)xPos - mouseLastPos.X) * player.sens * deltaTime;
+	f32 yOffset = (mouseLastPos.Y - (f32)yPos) * deltaTime; // reversed since y-coordinates range from bottom to top
+	f32 xOffset = ((f32)xPos - mouseLastPos.X) * deltaTime;
 	mouseLastPos = { (f32)xPos, (f32)yPos };
 
 	player.UpdateDir(xOffset, yOffset);
@@ -45,8 +53,22 @@ static_func void OnMouseInput(GLFWwindow* window, double xPos, double yPos)
 
 static_func void ProcessKeyboard(GLFWwindow *window)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS && !keyWasDown[GLFW_KEY_ESCAPE])
+	{
+		keyWasDown[GLFW_KEY_ESCAPE] = true;
+		inFreeRoam = !inFreeRoam;
+		if (inFreeRoam)
+		{
+			firstMouse = true;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+		else
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE && keyWasDown[GLFW_KEY_ESCAPE])
+	{
+		keyWasDown[GLFW_KEY_ESCAPE] = false;
+	}
 
 	f32 camSpeed = deltaTime * player.speed;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -73,6 +95,16 @@ static_func void ProcessKeyboard(GLFWwindow *window)
 	{
 		player.pos.Y -= camSpeed;
 	}
+	
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS && !keyWasDown[GLFW_KEY_1])
+	{
+		keyWasDown[GLFW_KEY_1] = true;
+		dogCurAnim |= DOG_ANIMATION_NECK;
+	}
+	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE && keyWasDown[GLFW_KEY_1])
+	{
+		keyWasDown[GLFW_KEY_1] = false;
+	}
 }
 
 int main()
@@ -91,14 +123,23 @@ int main()
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, OnFramebufferSize);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, OnMouseInput);
+	
+	if (inFreeRoam)
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+	
+	//------------------------------------------------------------------------
+	// PRINT MENU
+	std::cout << "Press Esc to switch between free roam and cursor" << std::endl;
+	std::cout << "Press 1 to animate neck" << std::endl;
+	
+	//------------------------------------------------------------------------
 
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -112,7 +153,7 @@ int main()
 	ShaderProgram defaultShader = {};
 	defaultShader.Create(shaders, ArrayCount(shaders));
 
-	mesh dog = {}; 
+	mesh dog = {};
 	dog.MakeDog();
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -130,7 +171,7 @@ int main()
 		defaultShader.Use();
 
 		vec3 light[] = { 1.0f, 1.0f, 1.0f };
-	 
+
 		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame) };
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightPos", &player.pos);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightColor", light);
@@ -141,6 +182,8 @@ int main()
 		mat4 proj = Perspective(player.fov, (f32)WINDOW_WIDTH / (f32)WINDOW_HEIGHT, 0.1f, 100.0f);
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "view", &view);
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "proj", &proj);
+
+		AnimateDog(dogCurAnim, deltaTime, curFrame);
 		
 		dog.Draw(defaultShader);
 

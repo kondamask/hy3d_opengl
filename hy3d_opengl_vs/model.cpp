@@ -125,7 +125,8 @@ bool mesh::MakeDog()
 	parts[DOG_FRONT_LEFT_UPPER_LEG].sibling = &parts[DOG_FRONT_RIGHT_UPPER_LEG];
 	parts[DOG_FRONT_RIGHT_UPPER_LEG].sibling = &parts[DOG_BACK_LEFT_UPPER_LEG];
 	parts[DOG_BACK_LEFT_UPPER_LEG].sibling = &parts[DOG_BACK_RIGHT_UPPER_LEG];
-
+	parts[DOG_BACK_RIGHT_UPPER_LEG].sibling = &parts[DOG_TAIL_BASE];
+	
 	parts[DOG_FRONT_LEFT_UPPER_LEG].child = &parts[DOG_FRONT_LEFT_LOWER_LEG];
 	parts[DOG_FRONT_RIGHT_UPPER_LEG].child = &parts[DOG_FRONT_RIGHT_LOWER_LEG];
 	parts[DOG_BACK_LEFT_UPPER_LEG].child = &parts[DOG_BACK_LEFT_LOWER_LEG];
@@ -135,6 +136,8 @@ bool mesh::MakeDog()
 	parts[DOG_FRONT_RIGHT_LOWER_LEG].child = &parts[DOG_FRONT_RIGHT_FOOT];
 	parts[DOG_BACK_LEFT_LOWER_LEG].child = &parts[DOG_BACK_LEFT_FOOT];
 	parts[DOG_BACK_RIGHT_LOWER_LEG].child = &parts[DOG_BACK_RIGHT_FOOT];
+	
+	parts[DOG_TAIL_BASE].child = &parts[DOG_TAIL_END];
 
 	// Set Draw functions
 	parts[DOG_TORSO].Draw = Draw_DOG_TORSO;
@@ -152,6 +155,8 @@ bool mesh::MakeDog()
 	parts[DOG_FRONT_RIGHT_UPPER_LEG].Draw = Draw_DOG_FRONT_RIGHT_UPPER_LEG;
 	parts[DOG_FRONT_RIGHT_LOWER_LEG].Draw = Draw_DOG_FRONT_RIGHT_LOWER_LEG;
 	parts[DOG_FRONT_RIGHT_FOOT].Draw = Draw_DOG_FRONT_RIGHT_FOOT;
+	parts[DOG_TAIL_BASE].Draw = Draw_DOG_TAIL_BASE;
+	parts[DOG_TAIL_END].Draw = Draw_DOG_TAIL_END;
 
 	// Set vertices locations
 	for (u32 i = 0; i < DOG_PARTS_COUNT; i++)
@@ -220,8 +225,8 @@ void mesh::Draw(ShaderProgram &shader)
 
 void mesh::Traverse(ShaderProgram &shader, mesh_part *p, mat4 &parentModel)
 {
-	// NOTE: ONLY TRANSLATIONS ARE APLIED TO CHILDREN.
-	// NOT ROTATIONS AND SCALINGS.
+	// NOTE: ONLY TRANSLATIONS AND ROTATIONS ARE APLIED TO CHILDREN.
+	// NOT SCALINGS.
 	if (p)
 	{
 		p->model = parentModel;
@@ -233,135 +238,205 @@ void mesh::Traverse(ShaderProgram &shader, mesh_part *p, mat4 &parentModel)
 	}
 }
 
-static void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part)
 {
 	mat4 trans = Multiply(part.model, Scale( { 0.3f, 0.3f, 1.5f }));
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, 0.1f, 0.8f});
-	mat4 trans = part.model * Rotate(-45.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.15f, 0.15f, 0.6f });	
-	
+	part.model = part.model *
+		Translate( { 0.0f, 0.0f, 0.4f }) *
+		Rotate(dogNeckAngle, { 1.0f, 0.0f, 0.0f }) *
+		Translate( { 0.0f, 0.0f, 0.5f });
+	mat4 trans = part.model * Scale( { 0.15f, 0.15f, 0.4f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, 0.3f, 0.4f});
-	mat4 trans = part.model * Scale({ 0.2f, 0.2f, 0.3f });
-		
+	part.model = part.model * Translate( { 0.0f, -0.1f, 0.3f }) * Rotate(45.0f, { 1.0f, 0.0f, 0.0f }); ;
+	mat4 trans = part.model * Scale( { 0.2f, 0.2f, 0.3f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawElements(GL_TRIANGLES, part.nIndices, GL_UNSIGNED_INT, (void *)0);
 }
 
-static void Draw_DOG_BACK_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.2f, -0.35f, -0.6f});
-	mat4 trans = part.model * Rotate(80.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.2f, -0.35f, -0.6f }) * Rotate(80.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.45f, 0.00f});
-	mat4 trans = part.model * Rotate(100.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.0f, -0.09f, 0.45f }) * Rotate(20.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.3f, 0.05f});
-	mat4 trans = part.model * Scale({ 0.07f, 0.07f, 0.3f });
-	
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_BACK_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({-0.2f, -0.35f, -0.6f});
-	mat4 trans = part.model * Rotate(80.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { -0.2f, -0.35f, -0.6f }) * Rotate(80.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.45f, 0.00f});
-	mat4 trans = part.model * Rotate(100.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.0f, -0.09f, 0.45f }) * Rotate(20.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.3f, 0.05f});
-	mat4 trans = part.model * Scale({ 0.07f, 0.07f, 0.3f });
-	
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.2f, -0.35f, 0.6f});
-	mat4 trans = part.model * Rotate(80.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.2f, -0.35f, 0.6f }) * Rotate(80.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.45f, 0.00f});
-	mat4 trans = part.model * Rotate(100.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.0f, -0.09f, 0.45f }) * Rotate(20.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.3f, 0.05f});
-	mat4 trans = part.model * Scale({ 0.07f, 0.07f, 0.3f });
-	
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({-0.2f, -0.35f, 0.6f});
-	mat4 trans = part.model * Rotate(80.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { -0.2f, -0.35f, 0.6f }) * Rotate(80.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.45f, 0.00f});
-	mat4 trans = part.model * Rotate(100.0f, { 1.0f, 0.0f, 0.0f }) * Scale({ 0.07f, 0.07f, 0.5f });
-	
+	part.model = part.model * Translate( { 0.0f, -0.09f, 0.45f }) * Rotate(20.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
 }
 
-static void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part)
+static_func void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate({0.0f, -0.3f, 0.05f});
-	mat4 trans = part.model * Scale({ 0.07f, 0.07f, 0.3f });
-	
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
+
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
 	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
+}
+
+static_func void Draw_DOG_TAIL_BASE(ShaderProgram &shader, mesh_part &part)
+{
+	part.model = part.model * 
+		Translate( { 0.0f, 0.1f, -0.45f }) * 
+		Rotate(20.0f, { 1.0f, 0.0f, 0.0f }) *
+		Rotate(dogTailAngle, { 0.0f, 1.0f, 0.0f }) *
+		Translate( { 0.0f, 0.0f, -0.5f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
+	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
+	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
+}
+
+static_func void Draw_DOG_TAIL_END(ShaderProgram &shader, mesh_part &part)
+{
+	part.model = part.model * 
+		Translate( { 0.0f, -0.14f, -0.4f }) * 
+		Rotate(-40.0f, { 1.0f, 0.0f, 0.0f });
+	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
+
+	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
+	glDrawArrays(GL_TRIANGLE_STRIP, part.firstVert, part.nVertices);
+}
+
+void AnimateDog(u32 &animations, f32 dt, f32 time)
+{
+	dogTailAngle = SinF(10.0f * time) * 20.0f;
+	
+	if (!animations)
+		return;
+	
+	if (animations & DOG_ANIMATION_NECK)
+	{
+		f32 duration = 1.0f;
+
+		u32 animIndex = (animations & DOG_ANIMATION_NECK) / 2;
+		
+		curDogAnimDur[animIndex] += dt;
+
+		bool finished = curDogAnimDur[animIndex] > duration;
+		if (finished)
+			curDogAnimDur[animIndex] = duration;
+
+		
+		f32 startAngle = -45.f;
+		f32 endAngle = 20.0f;
+		if (neckDown)
+		{
+			startAngle = 20.0f;
+			endAngle = -45.f;
+		}
+		f32 range = endAngle - startAngle;
+
+		f32 progress = curDogAnimDur[animIndex] / duration;
+		dogNeckAngle = startAngle + progress * range;
+			
+		//DebugPrint(progress << std::endl);
+			
+		if (finished)
+		{
+			neckDown = !neckDown;
+			animations &= ~DOG_ANIMATION_NECK;
+			curDogAnimDur[animIndex] = 0.f;
+		}
+	}
 }

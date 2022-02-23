@@ -124,26 +124,44 @@ enum DOG_PARTS
 	DOG_FRONT_RIGHT_UPPER_LEG,
 	DOG_FRONT_RIGHT_LOWER_LEG,
 	DOG_FRONT_RIGHT_FOOT,
+	DOG_TAIL_BASE,
+	DOG_TAIL_END,
 
 	DOG_PARTS_COUNT
 };
 
-static void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
-static void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_LEFT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_RIGHT_UPPER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_TAIL_BASE(ShaderProgram &shader, mesh_part &part);
+static_func void Draw_DOG_TAIL_END(ShaderProgram &shader, mesh_part &part);
 
-#define DOG_LEG_SCALE { 0.07f, 0.07f, 0.5f }
+enum DOG_ANIMATION
+{
+	DOG_ANIMATION_NONE = 0,
+	
+	DOG_ANIMATION_NECK = 1,
+	DOG_ANIMATION_FRONT_LEFT_UP = 4,
+	DOG_ANIMATION_STAND_ON_BACK_LEGS = 8,
+	DOG_ANIMATION_RETURN_TO_NEUTRAL = 16,
+};
+
+global_var f32 curDogAnimDur[5] = {};
+global_var f32 dogNeckAngle = -45.0f;
+global_var f32 dogTailAngle = 0.0f;
+global_var bool neckDown = false;
+void AnimateDog(u32 &animations, f32 dt, f32 time);
 
 #endif
