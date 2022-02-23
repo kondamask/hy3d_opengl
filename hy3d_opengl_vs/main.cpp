@@ -145,7 +145,7 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	player.Initialize( { 0.0f, 0.0f, 5.0f }, { 0.0f, 0.0f, -1.0f }, VEC3_UP, 5.0f, 150.0f, 60.0f);
+	player.Initialize( { 0.0f, 5.0f, 20.0f }, { 0.0f, 0.0f, -1.0f }, VEC3_UP, 5.0f, 150.0f, 60.0f);
 
 	shader_info shaders[] = {
 		{ "default.vert", GL_VERTEX_SHADER },
@@ -156,8 +156,13 @@ int main()
 
 	mesh dog = {};
 	dog.MakeDog();
+	dog.pos = { 5.0f, 1.5f, 0.0f };
+	
+	mesh plane = {};
+	plane.MakeHorizontalPlane(50.0f, 50.0f);
+	plane.pos.Y = -0.05f;
 
-	particles particles = {};
+	particle_system particles = {};
 	particles.Initialize();
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -189,7 +194,11 @@ int main()
 
 		AnimateDog(dogCurAnim, deltaTime, curFrame);
 		dog.Draw(defaultShader);
-
+		
+		object = { 0.6f, 0.6f, 0.6f };
+		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", &object);
+		plane.Draw(defaultShader);
+		
 		object = { 1.0f, 1.0f, 1.0f };
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", &object);
 		particles.UpdateAndRender(defaultShader, deltaTime, curFrame);

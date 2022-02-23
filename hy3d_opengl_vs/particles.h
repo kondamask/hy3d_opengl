@@ -10,7 +10,7 @@
 
 #define MAX_PARTICLES 1024
 
-struct particles
+struct particle_system
 {
 	vec3 p[MAX_PARTICLES];
 	vec3 dp[MAX_PARTICLES];
@@ -18,7 +18,7 @@ struct particles
 
 	//------------------------------------------------------------------------
 
-	bool Initialize();
+	void Initialize();
 
 	void Delete();
 

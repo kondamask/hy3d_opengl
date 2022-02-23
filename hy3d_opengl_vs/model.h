@@ -22,7 +22,7 @@ struct mesh
 {	
 	mesh_part *parts = 0;
 	render_buffers buffers;
-	//mat4 model;
+	vec3 pos;
 	
 	//------------------------------------------------------------------------
 	
@@ -31,6 +31,8 @@ struct mesh
 	bool MakeCylinder(u32 stacks = 1, u32 slices = 20, f32 height = 1.0f, f32 radius = 1.0f);
 
 	bool MakeSphere(u32 stacks = 25, u32 slices = 10, f32 radius = 1.0f);
+	
+	void MakeHorizontalPlane(f32 xSide, f32 zSide);
 
 	bool MakeDog();
 

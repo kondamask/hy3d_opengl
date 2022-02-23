@@ -26,26 +26,23 @@ struct render_buffers
 
 	bool Initialize()
 	{
-		if (!vertices)
-			return false;
-		
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
-		
+
 		if (indices)
 			glGenBuffers(1, &EBO);
 
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-		glBufferData(GL_ARRAY_BUFFER, GetVertexBufferSize(), &vertices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, GetVertexBufferSize(), vertices, GL_STATIC_DRAW);
 
 		if (indices)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, GetIndexBufferSize(), &indices[0], GL_STATIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, GetIndexBufferSize(), indices, GL_STATIC_DRAW);
 		}
-		
+
 		// vertex positions
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
@@ -57,10 +54,10 @@ struct render_buffers
 		// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(Vertex, TexCoords));
 
 		glBindVertexArray(0);
-		
+
 		return true;
 	}
-	
+
 	void Delete()
 	{
 		if (vertices) { free(vertices); }

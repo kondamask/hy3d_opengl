@@ -49,6 +49,7 @@ bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 	buffers.nVertices = (stacks + 1)* (slices + 1);
 	buffers.vertices = ArrAlloc(vertex, buffers.nVertices);
 
+	//buffers.Initialize((stacks + 1) * (slices + 1), stacks * slices * 6);
 	u32 iVert = 0;
 	for (u32 y = 0; y <= stacks; ++y)
 	{
@@ -89,7 +90,39 @@ bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 		}
 	}
 
+	buffers.Initialize();
 	return true;
+}
+
+void mesh::MakeHorizontalPlane(f32 xSide, f32 zSide)
+{
+	buffers.nVertices = 4;
+	buffers.vertices = ArrAlloc(vertex, buffers.nVertices);
+	buffers.nIndices = 6;  //12;
+	buffers.indices = ArrAlloc(u32, buffers.nIndices);
+
+	buffers.vertices[0] = {  { -xSide / 2.0f, 0.0f, -zSide / 2.0f }, { 0.0f, 1.0f, 0.0f } };
+	buffers.vertices[1] = {  { -xSide / 2.0f, 0.0f, zSide / 2.0f }, { 0.0f, 1.0f, 0.0f } };
+	buffers.vertices[2] = {  { xSide / 2.0f, 0.0f, zSide / 2.0f }, { 0.0f, 1.0f, 0.0f } };
+	buffers.vertices[3] = { { xSide / 2.0f, 0.0f, -zSide / 2.0f }, { 0.0f, 1.0f, 0.0f } };
+
+	// Bottom view
+	buffers.indices[0] = 0;
+	buffers.indices[1] = 1;
+	buffers.indices[2] = 2;
+	buffers.indices[3] = 2;
+	buffers.indices[4] = 3;
+	buffers.indices[5] = 0;
+/*
+	// Top view
+	buffers.indices[0 + 6] = 0;
+	buffers.indices[1 + 6] = 2;
+	buffers.indices[2 + 6] = 1;
+	buffers.indices[3 + 6] = 0;
+	buffers.indices[4 + 6] = 3;
+	buffers.indices[5 + 6] = 2;
+*/
+	buffers.Initialize();
 }
 
 bool mesh::MakeDog()
@@ -126,7 +159,7 @@ bool mesh::MakeDog()
 	parts[DOG_FRONT_RIGHT_UPPER_LEG].sibling = &parts[DOG_BACK_LEFT_UPPER_LEG];
 	parts[DOG_BACK_LEFT_UPPER_LEG].sibling = &parts[DOG_BACK_RIGHT_UPPER_LEG];
 	parts[DOG_BACK_RIGHT_UPPER_LEG].sibling = &parts[DOG_TAIL_BASE];
-	
+
 	parts[DOG_FRONT_LEFT_UPPER_LEG].child = &parts[DOG_FRONT_LEFT_LOWER_LEG];
 	parts[DOG_FRONT_RIGHT_UPPER_LEG].child = &parts[DOG_FRONT_RIGHT_LOWER_LEG];
 	parts[DOG_BACK_LEFT_UPPER_LEG].child = &parts[DOG_BACK_LEFT_LOWER_LEG];
@@ -136,7 +169,7 @@ bool mesh::MakeDog()
 	parts[DOG_FRONT_RIGHT_LOWER_LEG].child = &parts[DOG_FRONT_RIGHT_FOOT];
 	parts[DOG_BACK_LEFT_LOWER_LEG].child = &parts[DOG_BACK_LEFT_FOOT];
 	parts[DOG_BACK_RIGHT_LOWER_LEG].child = &parts[DOG_BACK_RIGHT_FOOT];
-	
+
 	parts[DOG_TAIL_BASE].child = &parts[DOG_TAIL_END];
 
 	// Set Draw functions
@@ -186,9 +219,20 @@ void mesh::Delete()
 void mesh::Draw(ShaderProgram &shader)
 {
 	glBindVertexArray(buffers.VAO);
-	//mat4 identity = Mat4d(1.0f);
-	mat4 model = Translate( { 5.0f, 0.0f, 0.0f } );
-	Traverse(shader, &parts[0], model);
+
+	mat4 model = Translate(pos);
+	if (parts)
+		Traverse(shader, &parts[0], model);
+	else if (buffers.indices)
+	{
+		shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &model);
+		glDrawElements(GL_TRIANGLES, buffers.nIndices, GL_UNSIGNED_INT, (void *)0);
+	}
+	else
+	{
+		shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &model);
+		glDrawArrays(GL_TRIANGLES, 0, buffers.nVertices);
+	}
 	glBindVertexArray(0);
 }
 
@@ -228,7 +272,7 @@ static_func void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part)
 
 static_func void Draw_DOG_HEAD(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate( { 0.0f, -0.1f, 0.3f }) * Rotate(45.0f, { 1.0f, 0.0f, 0.0f }); ;
+	part.model = part.model * Translate( { 0.0f, -0.1f, 0.3f }) * Rotate(45.0f, { 1.0f, 0.0f, 0.0f });;
 	mat4 trans = part.model * Scale( { 0.2f, 0.2f, 0.3f });
 
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
@@ -255,7 +299,7 @@ static_func void Draw_DOG_BACK_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part &
 
 static_func void Draw_DOG_BACK_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f });;
 	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
 
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
@@ -282,7 +326,7 @@ static_func void Draw_DOG_BACK_RIGHT_LOWER_LEG(ShaderProgram &shader, mesh_part 
 
 static_func void Draw_DOG_BACK_RIGHT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f });;
 	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
 
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
@@ -309,7 +353,7 @@ static_func void Draw_DOG_FRONT_LEFT_LOWER_LEG(ShaderProgram &shader, mesh_part 
 
 static_func void Draw_DOG_FRONT_LEFT_FOOT(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f }); ;
+	part.model = part.model * Translate( { 0.0f, 0.15f, 0.19f }) * Rotate(-100.0f, { 1.0f, 0.0f, 0.0f });;
 	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.3f });
 
 	shader.SetUniform(UNIFORM_TYPE::MAT4, "model", &trans);
@@ -345,8 +389,8 @@ static_func void Draw_DOG_FRONT_RIGHT_FOOT(ShaderProgram &shader, mesh_part &par
 
 static_func void Draw_DOG_TAIL_BASE(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * 
-		Translate( { 0.0f, 0.1f, -0.45f }) * 
+	part.model = part.model *
+		Translate( { 0.0f, 0.1f, -0.45f }) *
 		Rotate(20.0f, { 1.0f, 0.0f, 0.0f }) *
 		Rotate(dogTailAngle, { 0.0f, 1.0f, 0.0f }) *
 		Translate( { 0.0f, 0.0f, -0.5f });
@@ -358,8 +402,8 @@ static_func void Draw_DOG_TAIL_BASE(ShaderProgram &shader, mesh_part &part)
 
 static_func void Draw_DOG_TAIL_END(ShaderProgram &shader, mesh_part &part)
 {
-	part.model = part.model * 
-		Translate( { 0.0f, -0.14f, -0.4f }) * 
+	part.model = part.model *
+		Translate( { 0.0f, -0.14f, -0.4f }) *
 		Rotate(-40.0f, { 1.0f, 0.0f, 0.0f });
 	mat4 trans = part.model * Scale( { 0.07f, 0.07f, 0.5f });
 
@@ -370,23 +414,23 @@ static_func void Draw_DOG_TAIL_END(ShaderProgram &shader, mesh_part &part)
 void AnimateDog(u32 &animations, f32 dt, f32 time)
 {
 	dogTailAngle = SinF(10.0f * time) * 20.0f;
-	
+
 	if (!animations)
 		return;
-	
+
 	if (animations & DOG_ANIMATION_NECK)
 	{
 		f32 duration = 0.5f;
 
 		u32 animIndex = (animations & DOG_ANIMATION_NECK) / 2;
-		
+
 		curDogAnimDur[animIndex] += dt;
 
 		bool finished = curDogAnimDur[animIndex] > duration;
 		if (finished)
 			curDogAnimDur[animIndex] = duration;
 
-		
+
 		f32 startAngle = -45.f;
 		f32 endAngle = 20.0f;
 		if (neckDown)
@@ -398,9 +442,9 @@ void AnimateDog(u32 &animations, f32 dt, f32 time)
 
 		f32 progress = curDogAnimDur[animIndex] / duration;
 		dogNeckAngle = startAngle + progress * range;
-			
+
 		//DebugPrint(progress << std::endl);
-			
+
 		if (finished)
 		{
 			neckDown = !neckDown;
