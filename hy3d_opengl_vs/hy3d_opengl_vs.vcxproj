@@ -163,6 +163,7 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="model.cpp" />
+    <ClCompile Include="particles.cpp" />
     <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +173,9 @@
     <ClInclude Include="HandmadeMath.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="particles.h" />
+    <ClInclude Include="random.h" />
+    <ClInclude Include="renderer.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>

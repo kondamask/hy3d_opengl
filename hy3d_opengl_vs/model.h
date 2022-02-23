@@ -4,13 +4,8 @@
 #include "core.h"
 #include "math.h"
 #include "shader.h"
+#include "renderer.h"
 
-struct vertex
-{
-	vec3 pos;
-	vec3 normal;
-	//vec2 tex;
-};
 struct mesh_part
 {
 	mat4 model;
@@ -23,39 +18,26 @@ struct mesh_part
 	void (*Draw)(ShaderProgram &shader, mesh_part &part);
 };
 
-class mesh
+struct mesh
 {	
-public:
+	mesh_part *parts = 0;
+	render_buffers buffers;
+	//mat4 model;
+	
+	//------------------------------------------------------------------------
+	
 	void Draw(ShaderProgram &shader);
 
 	bool MakeCylinder(u32 stacks = 1, u32 slices = 20, f32 height = 1.0f, f32 radius = 1.0f);
 
-	bool MakeSphere(u32 stacks = 25, u32 slices = 25, f32 radius = 1.0f);
+	bool MakeSphere(u32 stacks = 25, u32 slices = 10, f32 radius = 1.0f);
 
 	bool MakeDog();
 
 	void Delete();
-	
-	inline u32 GetVertexBufferSize() { return (nVertices * sizeof(vertex)); }
-
-	inline u32 GetIndexBufferSize() { return (nIndices * sizeof(u32)); }
 
 private:
-	mesh_part *parts = 0;
-	vertex *vertices = 0;
-	u32 *indices = 0;
-	u32 nVertices = 0;
-	u32 nIndices = 0;
-	vec3 pos = {};
-	u32 VAO;
-	u32 VBO;
-	u32 EBO;
-	
-	inline void GLSetUp();
-
 	inline void Traverse(ShaderProgram &shader, mesh_part *p, mat4 &prevModel);
-
-	static_func void DivideTriangle(vec3 a, vec3 b, vec3 c, int reps);
 };
 
 /* CUBE

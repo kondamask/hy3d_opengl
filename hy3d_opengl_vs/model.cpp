@@ -4,11 +4,11 @@
 
 bool mesh::MakeCylinder(u32 stacks, u32 slices, f32 height, f32 radius)
 {
-	if (parts || vertices || indices)
+	if (parts || buffers.vertices || buffers.indices)
 		return false;
 
-	nVertices = stacks * (slices + 1) * 2;
-	vertices = ArrAlloc(vertex, nVertices);
+	buffers.nVertices = stacks * (slices + 1) * 2;
+	buffers.vertices = ArrAlloc(vertex, buffers.nVertices);
 
 	float stackStep = height / stacks;
 	float sliceStep = 2.0f * HMM_PI32 / slices;
@@ -26,13 +26,13 @@ bool mesh::MakeCylinder(u32 stacks, u32 slices, f32 height, f32 radius)
 			f32 x = radius * cos(theta);
 			f32 y = radius * sin(theta);
 
-			vertices[iVert].pos = { x, y, z0 };
-			vertices[iVert].normal = { x / radius, y / radius, 0.0 };
+			buffers.vertices[iVert].pos = { x, y, z0 };
+			buffers.vertices[iVert].normal = { x / radius, y / radius, 0.0 };
 			//glTexCoord2f(j / (GLfloat) numMinor, i / (GLfloat) numMajor);
 			iVert++;
 
-			vertices[iVert].pos = { x, y, z1 };
-			vertices[iVert].normal = { x / radius, y / radius, 0.0 };
+			buffers.vertices[iVert].pos = { x, y, z1 };
+			buffers.vertices[iVert].normal = { x / radius, y / radius, 0.0 };
 			//glTexCoord2f(j / (GLfloat) numMinor, (i + 1) / (GLfloat) numMajor);
 			iVert++;
 		}
@@ -43,11 +43,11 @@ bool mesh::MakeCylinder(u32 stacks, u32 slices, f32 height, f32 radius)
 
 bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 {
-	if (parts || vertices || indices)
+	if (parts || buffers.vertices || buffers.indices)
 		return false;
 
-	nVertices = (stacks + 1)* (slices + 1);
-	vertices = ArrAlloc(vertex, nVertices);
+	buffers.nVertices = (stacks + 1)* (slices + 1);
+	buffers.vertices = ArrAlloc(vertex, buffers.nVertices);
 
 	u32 iVert = 0;
 	for (u32 y = 0; y <= stacks; ++y)
@@ -62,14 +62,14 @@ bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 				SinF(iSlice * 2 * HMM_PI32) * SinF(iStack * HMM_PI32)
 			};
 
-			vertices[iVert].pos = pos * radius;
-			vertices[iVert].normal = pos;
+			buffers.vertices[iVert].pos = pos * radius;
+			buffers.vertices[iVert].normal = pos;
 			iVert++;
 		}
 	}
 
-	nIndices = stacks * slices * 6;
-	indices = ArrAlloc(u32, nIndices);
+	buffers.nIndices = stacks * slices * 6;
+	buffers.indices = ArrAlloc(u32, buffers.nIndices);
 
 	u32 iInd = 0;
 	bool oddRow = false;
@@ -77,13 +77,13 @@ bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 	{
 		for (u32 x = 0; x < slices; ++x)
 		{
-			indices[iInd] = (y + 1) * (slices + 1) + x;
-			indices[iInd + 1] = y * (slices + 1) + x;
-			indices[iInd + 2] = y * (slices + 1) + x + 1;
+			buffers.indices[iInd] = (y + 1) * (slices + 1) + x;
+			buffers.indices[iInd + 1] = y * (slices + 1) + x;
+			buffers.indices[iInd + 2] = y * (slices + 1) + x + 1;
 
-			indices[iInd + 3] = (y + 1) * (slices + 1) + x;
-			indices[iInd + 4] = y * (slices + 1) + x + 1;
-			indices[iInd + 5] = (y + 1) * (slices + 1) + x + 1;
+			buffers.indices[iInd + 3] = (y + 1) * (slices + 1) + x;
+			buffers.indices[iInd + 4] = y * (slices + 1) + x + 1;
+			buffers.indices[iInd + 5] = (y + 1) * (slices + 1) + x + 1;
 
 			iInd += 6;
 		}
@@ -94,7 +94,7 @@ bool mesh::MakeSphere(u32 stacks, u32 slices, f32 radius)
 
 bool mesh::MakeDog()
 {
-	if (parts || vertices || indices)
+	if (parts || buffers.vertices || buffers.indices)
 		return false;
 
 	// Allocate a parts array
@@ -108,14 +108,14 @@ bool mesh::MakeDog()
 	mesh cylinder = {};
 	cylinder.MakeCylinder();
 
-	nVertices = sphere.nVertices + cylinder.nVertices;
-	nIndices = sphere.nIndices;
-	vertices = ArrAlloc(vertex, nVertices);
-	indices = ArrAlloc(u32, nIndices);
+	buffers.nVertices = sphere.buffers.nVertices + cylinder.buffers.nVertices;
+	buffers.nIndices = sphere.buffers.nIndices;
+	buffers.vertices = ArrAlloc(vertex, buffers.nVertices);
+	buffers.indices = ArrAlloc(u32, buffers.nIndices);
 
-	memcpy(vertices, sphere.vertices, sphere.GetVertexBufferSize());
-	memcpy(vertices + sphere.nVertices, cylinder.vertices, cylinder.GetVertexBufferSize());
-	memcpy(indices, sphere.indices, sphere.GetIndexBufferSize()); // Only the sphere has indices	
+	memcpy(buffers.vertices, sphere.buffers.vertices, sphere.buffers.GetVertexBufferSize());
+	memcpy(buffers.vertices + sphere.buffers.nVertices, cylinder.buffers.vertices, cylinder.buffers.GetVertexBufferSize());
+	memcpy(buffers.indices, sphere.buffers.indices, sphere.buffers.GetIndexBufferSize()); // Only the sphere has indices	
 
 	// Create tree
 	parts[DOG_TORSO].child = &parts[DOG_NECK];
@@ -161,65 +161,34 @@ bool mesh::MakeDog()
 	// Set vertices locations
 	for (u32 i = 0; i < DOG_PARTS_COUNT; i++)
 	{
-		parts[i].firstVert = sphere.nVertices;
-		parts[i].nVertices = cylinder.nVertices;
+		parts[i].firstVert = sphere.buffers.nVertices;
+		parts[i].nVertices = cylinder.buffers.nVertices;
 	}
 	parts[DOG_HEAD].firstVert = 0;
 	parts[DOG_HEAD].firstIndex = 0;
-	parts[DOG_HEAD].nVertices = sphere.nVertices;
-	parts[DOG_HEAD].nIndices = sphere.nIndices;
+	parts[DOG_HEAD].nVertices = sphere.buffers.nVertices;
+	parts[DOG_HEAD].nIndices = sphere.buffers.nIndices;
 
 	sphere.Delete();
 	cylinder.Delete();
 
-	GLSetUp();
+	buffers.Initialize();
 
 	return true;
 }
 
-void mesh::GLSetUp()
-{
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	glBufferData(GL_ARRAY_BUFFER, GetVertexBufferSize(), &vertices[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, GetIndexBufferSize(), &indices[0], GL_STATIC_DRAW);
-
-	// vertex positions
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
-	// vertex normals
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
-	// vertex texture coords
-	// glEnableVertexAttribArray(2);	
-	// glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(Vertex, TexCoords));
-
-	glBindVertexArray(0);
-}
-
 void mesh::Delete()
 {
-	if (vertices) { free(vertices); }
-	if (indices) { free(indices); }
 	if (parts) { free(parts); }
-
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
+	buffers.Delete();
 }
 
 void mesh::Draw(ShaderProgram &shader)
 {
-	glBindVertexArray(VAO);
-	mat4 identity = Mat4d(1.0f);
-	Traverse(shader, &parts[0], identity);
+	glBindVertexArray(buffers.VAO);
+	//mat4 identity = Mat4d(1.0f);
+	mat4 model = Translate( { 5.0f, 0.0f, 0.0f } );
+	Traverse(shader, &parts[0], model);
 	glBindVertexArray(0);
 }
 
@@ -248,7 +217,7 @@ static_func void Draw_DOG_TORSO(ShaderProgram &shader, mesh_part &part)
 static_func void Draw_DOG_NECK(ShaderProgram &shader, mesh_part &part)
 {
 	part.model = part.model *
-		Translate( { 0.0f, 0.0f, 0.4f }) *
+		Translate( { 0.0f, -0.05f, 0.4f }) *
 		Rotate(dogNeckAngle, { 1.0f, 0.0f, 0.0f }) *
 		Translate( { 0.0f, 0.0f, 0.5f });
 	mat4 trans = part.model * Scale( { 0.15f, 0.15f, 0.4f });
@@ -407,7 +376,7 @@ void AnimateDog(u32 &animations, f32 dt, f32 time)
 	
 	if (animations & DOG_ANIMATION_NECK)
 	{
-		f32 duration = 1.0f;
+		f32 duration = 0.5f;
 
 		u32 animIndex = (animations & DOG_ANIMATION_NECK) / 2;
 		

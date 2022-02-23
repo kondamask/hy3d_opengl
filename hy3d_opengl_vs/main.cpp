@@ -6,6 +6,7 @@
 #include "math.h"
 #include "camera.h"
 #include "model.h"
+#include "particles.h"
 
 //------------------------------------------------------------------------
 
@@ -95,7 +96,7 @@ static_func void ProcessKeyboard(GLFWwindow *window)
 	{
 		player.pos.Y -= camSpeed;
 	}
-	
+
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS && !keyWasDown[GLFW_KEY_1])
 	{
 		keyWasDown[GLFW_KEY_1] = true;
@@ -124,7 +125,7 @@ int main()
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, OnFramebufferSize);
 	glfwSetCursorPosCallback(window, OnMouseInput);
-	
+
 	if (inFreeRoam)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -133,12 +134,12 @@ int main()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
-	
+
 	//------------------------------------------------------------------------
 	// PRINT MENU
 	std::cout << "Press Esc to switch between free roam and cursor" << std::endl;
 	std::cout << "Press 1 to animate neck" << std::endl;
-	
+
 	//------------------------------------------------------------------------
 
 	glEnable(GL_DEPTH_TEST);
@@ -156,6 +157,9 @@ int main()
 	mesh dog = {};
 	dog.MakeDog();
 
+	particles particles = {};
+	particles.Initialize();
+
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
 	while (!glfwWindowShouldClose(window))
@@ -172,10 +176,10 @@ int main()
 
 		vec3 light[] = { 1.0f, 1.0f, 1.0f };
 
-		vec3 object[] = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame) };
+		vec3 object = { 0.5f + 0.5f * CosF(3.0f * curFrame), 0.6f, 0.5f + 0.5f * SinF(2.0f * curFrame) };
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightPos", &player.pos);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "lightColor", light);
-		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", object);
+		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", &object);
 		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "viewPos", &player.pos);
 
 		mat4 view = LookAt(player.pos, player.pos + player.dir, VEC3_UP);
@@ -184,14 +188,18 @@ int main()
 		defaultShader.SetUniform(UNIFORM_TYPE::MAT4, "proj", &proj);
 
 		AnimateDog(dogCurAnim, deltaTime, curFrame);
-		
 		dog.Draw(defaultShader);
+
+		object = { 1.0f, 1.0f, 1.0f };
+		defaultShader.SetUniform(UNIFORM_TYPE::VEC3, "objectColor", &object);
+		particles.UpdateAndRender(defaultShader, deltaTime, curFrame);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	dog.Delete();
+	particles.Delete();
 
 	glfwTerminate();
 	return 0;

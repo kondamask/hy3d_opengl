@@ -69,6 +69,11 @@ void ShaderProgram::SetUniform(UNIFORM_TYPE type, const char *varName, void *dat
 	int uniformLocation = glGetUniformLocation(id, varName);
 	switch (type)
 	{
+		case UNIFORM_TYPE::FLOAT:
+		{
+			glUniform1f(uniformLocation, *(f32 *)data);
+		} break;
+		
 		case UNIFORM_TYPE::VEC3:
 		{
 			glUniform3fv(uniformLocation, count, (f32 *)data);

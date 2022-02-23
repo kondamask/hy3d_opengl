@@ -1,1 +1,0 @@
-msbuild /t:"hy3d_opengl_vs" /p:Configuration="Debug" /p:Platform="x64" /verbosity:minimal "W:/hy3d_opengl_vs/hy3d_opengl_vs.sln" /m

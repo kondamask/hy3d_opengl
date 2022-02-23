@@ -10,6 +10,12 @@
 #define VEC3_FRONT { 0.0f, 0.0f, 1.0f }
 #define VEC3_BACK { 0.0f, 0.0f, -1.0f }
 
+#define Min(a, b) ((a) > (b) ? (b) : (a))
+#define Max(a, b) ((a) < (b) ? (b) : (a))
+#define Abs(a) ((a) > 0 ? (a) : -(a))
+#define Mod(a, m) (((a) % (m)) >= 0 ? ((a) % (m)) : (((a) % (m)) + (m)))
+#define Square(x) ((x) * (x))
+
 typedef hmm_vec2 vec2;
 typedef hmm_vec3 vec3;
 typedef hmm_vec4 vec4;
